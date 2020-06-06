@@ -31,9 +31,9 @@ public class RSA {
 	
 	/**
 	 * Initialize an RSA Object that can be used to Encrypt and Decrypt messages
-	 * with random (and odds) p and q
+	 * with random (and odds) p and q.
 	 */
-	public RSA(BigInteger e32Bit) {
+	public RSA() {
 		Random rnd = new Random();
 		
 		// Generate random p and q 
@@ -49,11 +49,40 @@ public class RSA {
 		phiN64Bit = p32Bit.subtract(BigInteger.ONE).multiply(q32Bit.subtract(BigInteger.ONE));
 						
 		// Compute e
+		this.e32Bit = eSelection(phiN64Bit);
+		
+		// Compute d = e ^ (-1) mod phiN
+		privateKey = this.e32Bit.modInverse(phiN64Bit);
+	}
+	
+	/**
+	 * Initialize an RSA Object, with the specified exponent e, that can be used to
+	 * Encrypt and Decrypt messages with random (and odds) p and q. 
+	 * @param e32Bit
+	 */
+	public RSA(BigInteger e32Bit) {
 		if(e32Bit == null)
-			this.e32Bit = eSelection(phiN64Bit);
-		else
-			this.e32Bit = e32Bit;
-						
+			throw new NullPointerException();
+		if(e32Bit.compareTo(BigInteger.ONE) <= 0)
+			throw new IllegalArgumentException();
+		
+		Random rnd = new Random();
+		
+		// Generate random p and q 
+		do {
+			p32Bit = BigInteger.probablePrime(32, rnd);
+			q32Bit = BigInteger.probablePrime(32, rnd);
+			
+			// Compute n = p * q 
+			n64Bit = p32Bit.multiply(q32Bit);
+			
+			// Compute phiN = (p - 1) * (q - 1)
+			phiN64Bit = p32Bit.subtract(BigInteger.ONE).multiply(q32Bit.subtract(BigInteger.ONE));
+		} while(p32Bit.equals(q32Bit) || !e32Bit.gcd(phiN64Bit).equals(BigInteger.ONE) ||
+				e32Bit.compareTo(phiN64Bit) >= 0 || e32Bit.equals(phiN64Bit.add(two).divide(two)));
+	
+		this.e32Bit = e32Bit;
+		
 		// Compute d = e ^ (-1) mod phiN
 		privateKey = this.e32Bit.modInverse(phiN64Bit);
 	}

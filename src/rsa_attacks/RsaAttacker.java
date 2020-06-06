@@ -1,6 +1,7 @@
 package rsa_attacks;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 
 public final class RsaAttacker {
 	private RsaAttacker() {};
@@ -110,11 +111,74 @@ public final class RsaAttacker {
 	}
 	
 	/**
-	 * 
+	 * Calculate the nthroot of the given BigInteger
+	 * @param n
+	 * @param x
+	 * @return nthroot of x
+	 */
+	private static BigInteger nthRoot(int n, BigInteger x) {
+	    BigInteger y = BigInteger.ZERO;
+	    for(int m = (x.bitLength() - 1) / n; m >= 0; --m) {
+	        BigInteger z = y.setBit(m);
+	        int cmp = z.pow(n).compareTo(x);
+	        if(cmp == 0) 
+	        	return z;  // found exact root
+	        if(cmp < 0) 
+	        	y = z;     // keep bit set
+	    }
+	    
+	    return y; // return floor of exact root
+	}
+	
+	/**
+	 * Given a (little) value e and e user that received the same message; use the Chinese rest
+	 * theorem to find the only m' < n such that m' congruous m ^ e mod n.
 	 * @param e32Bit
+	 * @param n64Bits
+	 * @param cmsgs
 	 * @return Time spent
 	 */
-	public static long eSameValueAttack(BigInteger e32Bit) {
+	public static long eSameValueAttack(int e32Bit, ArrayList<BigInteger> n64Bits, ArrayList<BigInteger> cmsgs) {
+		if(n64Bits == null || cmsgs == null)
+			throw new NullPointerException();
+		if(e32Bit <= 1 || n64Bits.size() != e32Bit || cmsgs.size() != e32Bit)
+			throw new IllegalArgumentException();
+		
+		System.out.println(System.lineSeparator() + "Same Exponent Attack :" + System.lineSeparator());
+		
+		long start = System.currentTimeMillis();
+		
+		// Compute n = n1 * n2 * ... * n_e
+		BigInteger nChineseTh = BigInteger.ONE;
+		for(BigInteger x : n64Bits)
+			nChineseTh = nChineseTh.multiply(x);
+		
+		// Find m' congrous m ^ e mod n with the Chinese rest theorem
+		BigInteger sum = BigInteger.ZERO;
+		for(int i = 0; i < n64Bits.size(); i++) {
+			BigInteger p = nChineseTh.divide(n64Bits.get(i));
+			BigInteger tmp = p.modInverse(n64Bits.get(i));
+			sum = sum.add(cmsgs.get(i).multiply(tmp).multiply(p));
+		}
+		
+		BigInteger msg = nthRoot(e32Bit, sum.mod(nChineseTh));
+		
+		long timePassed = System.currentTimeMillis() - start;
+		
+		System.out.println("Completed in " + timePassed + " ms");
+		System.out.println("Message Discovered : <" + msg + ">" + System.lineSeparator());
+		
+		return timePassed;
+	}
+	
+	public static long nSameValueAttack(BigInteger n64Bit, BigInteger e32BitU1, BigInteger e32BitU2, BigInteger c1, BigInteger c2) {
+		if(n64Bit == null || e32BitU1 == null || e32BitU2 == null || c1 == null || c2 == null)
+			throw new NullPointerException();
+		if(!e32BitU1.gcd(e32BitU2).equals(BigInteger.ONE))
+			throw new IllegalArgumentException();
+		
+		// TODO
+		
 		return 0;
 	}
 }
