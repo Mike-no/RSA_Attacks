@@ -1,3 +1,14 @@
+/**
+ * ########################################################
+ * 
+ * @author: Michael De Angelis
+ * @mat: 560049
+ * @project: Esperienze di Programmazione [ESP]
+ * @AA: 2019 / 2020
+ * 
+ * ########################################################
+ */
+
 package rsa_attacks;
 
 import java.math.BigInteger;
@@ -171,14 +182,91 @@ public final class RsaAttacker {
 		return timePassed;
 	}
 	
+	/**
+	 * Private class that represent a simple triple
+	 */
+	private static class Triple {
+		private final BigInteger d;
+		private final BigInteger s;
+		private final BigInteger t;
+		
+		// Constructor
+		private Triple(final BigInteger d, final BigInteger s, final BigInteger t) {
+			if(d == null || s == null || t == null)
+				throw new NullPointerException();
+			
+			this.d = d;
+			this.s = s;
+			this.t = t;
+		}
+		
+		private final BigInteger getD() {
+			return d;
+		}
+		
+		private final BigInteger getS() {
+			return s;
+		}
+		
+		private final BigInteger getT() {
+			return t;
+		}
+	}
+	
+	/**
+	 * Compute the Extended Euclidean Algorithm with the given value a and b
+	 * @param a
+	 * @param b
+	 * @return Triple that represent the value of the Extended Euclidean Algorithm
+	 */
+	private static Triple apply(final BigInteger a, final BigInteger b) {
+		if(b.equals(BigInteger.ZERO))
+			return new Triple(a, BigInteger.ONE, BigInteger.ZERO);
+		else {
+			final Triple extension = apply(b, a.mod(b));
+			return new Triple(extension.getD(), extension.getT(), extension.getS().subtract(a.divide(b).multiply(extension.getT())));
+		}
+	}
+	
+	/**
+	 * Given 2 users that received the same message with the same value of n; use c1 ^ s * c2 ^ t mod n
+	 * to find the the message m.
+	 * @param n64Bit
+	 * @param e32BitU1
+	 * @param e32BitU2
+	 * @param c1
+	 * @param c2
+	 * @return Time spent
+	 */
 	public static long nSameValueAttack(BigInteger n64Bit, BigInteger e32BitU1, BigInteger e32BitU2, BigInteger c1, BigInteger c2) {
 		if(n64Bit == null || e32BitU1 == null || e32BitU2 == null || c1 == null || c2 == null)
 			throw new NullPointerException();
 		if(!e32BitU1.gcd(e32BitU2).equals(BigInteger.ONE))
 			throw new IllegalArgumentException();
 		
-		// TODO
+		System.out.println(System.lineSeparator() + "Same Exponent Attack :" + System.lineSeparator());
 		
-		return 0;
+		long start = System.currentTimeMillis();
+		
+		// Gets the s and t such that s * e32BitU1 + t * e32BitU2 = 1
+		Triple st = apply(e32BitU1, e32BitU2);
+		
+		// Compute c1 ^ s * c2 ^ t mod n
+		BigInteger msg = null;
+		if(st.getS().compareTo(BigInteger.ZERO) < 0) {
+			BigInteger tmp = c1.modInverse(n64Bit);
+			msg = tmp.modPow(st.getS().negate(), n64Bit).multiply(c2.modPow(st.getT(), n64Bit)).mod(n64Bit);
+		}
+		else {
+			BigInteger tmp = c2.modInverse(n64Bit);
+			msg = c1.modPow(st.getS(), n64Bit).multiply(tmp.modPow(st.getT().negate(), n64Bit)).mod(n64Bit);
+		}
+			
+		long timePassed = System.currentTimeMillis() - start;
+		
+		System.out.println("Completed in " + timePassed + " ms");
+		System.out.println("Message Discovered : <" + msg + ">" + System.lineSeparator());
+		
+		return timePassed;
 	}
 }

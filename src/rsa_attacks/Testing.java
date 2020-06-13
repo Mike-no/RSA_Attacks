@@ -1,3 +1,14 @@
+/**
+ * ########################################################
+ * 
+ * @author: Michael De Angelis
+ * @mat: 560049
+ * @project: Esperienze di Programmazione [ESP]
+ * @AA: 2019 / 2020
+ * 
+ * ########################################################
+ */
+
 package rsa_attacks;
 
 import java.math.BigInteger;
@@ -53,5 +64,33 @@ public class Testing {
 		
 		RsaAttacker.eSameValueAttack(e, n, c);
 		
+		// Generate p and q such that p != q
+		BigInteger p32Bit = null;
+		BigInteger q32Bit = null;
+		do {
+			p32Bit = BigInteger.probablePrime(32, rnd);
+			q32Bit = BigInteger.probablePrime(32, rnd);
+		} while(p32Bit.equals(q32Bit));
+		
+		// Generate two RSA object with the same value of n and different exponents; gcd(e1, e2) must be 1
+		RSA rsa1 = null;
+		RSA rsa2 = null;
+		do {
+			rsa1 = new RSA(p32Bit, q32Bit);
+			rsa2 = new RSA(p32Bit, q32Bit);
+		} while(rsa1.getExponent().equals(rsa2.getExponent()) || 
+				!rsa1.getExponent().gcd(rsa2.getExponent()).equals(BigInteger.ONE));
+		
+		rsa1.printInfo();
+		rsa2.printInfo();
+		
+		// Generate a random message less that rsa1.N and rsa2.N
+		do {
+			msg = new BigInteger(32, rnd);
+		} while(msg.compareTo(rsa1.getN()) >= 0 || msg.compareTo(rsa2.getN()) >= 0);
+		
+		System.out.println("Original Random Message: " + msg + System.lineSeparator());
+		
+		RsaAttacker.nSameValueAttack(rsa1.getN(), rsa1.getExponent(), rsa2.getExponent(), rsa1.encrypt(msg), rsa2.encrypt(msg));
 	}
 }
