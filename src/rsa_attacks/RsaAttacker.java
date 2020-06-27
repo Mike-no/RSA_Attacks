@@ -157,7 +157,7 @@ public final class RsaAttacker {
 		
 		System.out.println(System.lineSeparator() + "Same Exponent Attack :" + System.lineSeparator());
 		
-		long start = System.currentTimeMillis();
+		long start = System.nanoTime();
 		
 		// Compute n = n1 * n2 * ... * n_e
 		BigInteger nChineseTh = BigInteger.ONE;
@@ -174,9 +174,9 @@ public final class RsaAttacker {
 		
 		BigInteger msg = nthRoot(e32Bit, sum.mod(nChineseTh));
 		
-		long timePassed = System.currentTimeMillis() - start;
+		long timePassed = System.nanoTime() - start;
 		
-		System.out.println("Completed in " + timePassed + " ms");
+		System.out.println("Completed in " + timePassed + " ns");
 		System.out.println("Message Discovered : <" + msg + ">" + System.lineSeparator());
 		
 		return timePassed;
@@ -244,9 +244,9 @@ public final class RsaAttacker {
 		if(!e32BitU1.gcd(e32BitU2).equals(BigInteger.ONE))
 			throw new IllegalArgumentException();
 		
-		System.out.println(System.lineSeparator() + "Same Exponent Attack :" + System.lineSeparator());
+		System.out.println(System.lineSeparator() + "Same n Attack :" + System.lineSeparator());
 		
-		long start = System.currentTimeMillis();
+		long start = System.nanoTime();
 		
 		// Gets the s and t such that s * e32BitU1 + t * e32BitU2 = 1
 		Triple st = apply(e32BitU1, e32BitU2);
@@ -262,9 +262,9 @@ public final class RsaAttacker {
 			msg = c1.modPow(st.getS(), n64Bit).multiply(tmp.modPow(st.getT().negate(), n64Bit)).mod(n64Bit);
 		}
 			
-		long timePassed = System.currentTimeMillis() - start;
+		long timePassed = System.nanoTime() - start;
 		
-		System.out.println("Completed in " + timePassed + " ms");
+		System.out.println("Completed in " + timePassed + " ns");
 		System.out.println("Message Discovered : <" + msg + ">" + System.lineSeparator());
 		
 		return timePassed;
